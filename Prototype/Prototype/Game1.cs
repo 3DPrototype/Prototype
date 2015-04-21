@@ -22,8 +22,13 @@ namespace Prototype
         Camera camera;
         Player player;
         List<Coin> coins = new List<Coin>();
-        Enemy[] enemies = new Enemy[2];
+        bool coinAlreadyExists = false;
+        Enemy[] enemies = new Enemy[4];
         Random rand = new Random();
+        int enemyDirection;
+        int gameState = 0;
+        int score;
+        float timeLeft;
         float counter = 0;
 
         float timeSinceLastUpdate;
@@ -36,15 +41,17 @@ namespace Prototype
 
         protected override void Initialize()
         {
-            plane[0] = new VertexPositionColor(new Vector3(-5.5f, -0.5f, -5.5f), Color.Green);
-            plane[1] = new VertexPositionColor(new Vector3(5.5f, -0.5f, -5.5f), Color.Blue);
-            plane[2] = new VertexPositionColor(new Vector3(-5.5f, -0.5f, 5.5f), Color.Red);
-            plane[3] = new VertexPositionColor(new Vector3(5.5f, -0.5f, 5.5f), Color.GreenYellow);
+            plane[0] = new VertexPositionColor(new Vector3(-11.0f, -0.5f, -11.0f), Color.Green);
+            plane[1] = new VertexPositionColor(new Vector3(11.0f, -0.5f, -11.0f), Color.GreenYellow);
+            plane[2] = new VertexPositionColor(new Vector3(-11.0f, -0.5f, 11.0f), Color.LightGreen);
+            plane[3] = new VertexPositionColor(new Vector3(11.0f, -0.5f, 11.0f), Color.LawnGreen);
             player = new Player(new Vector3(0, 0, 0), new Vector2(0, 1));
-            camera = new Camera(new Vector3(0, 15, 7), Vector3.Zero, Vector3.Up);
-            enemies[0] = new Enemy(new Vector3(-5,0,5));
-            enemies[1] = new Enemy(new Vector3(5,0,-5));
-
+            camera = new Camera(new Vector3(0, 25, 15), Vector3.Zero, Vector3.Up);
+            enemies[0] = new Enemy(new Vector3(-3,0,3));
+            enemies[1] = new Enemy(new Vector3(3,0,-3));
+            enemies[2] = new Enemy(new Vector3(3, 0, 3));
+            enemies[3] = new Enemy(new Vector3(-3, 0, -3));
+            timeLeft = 30000;
             base.Initialize();
         }
 
@@ -71,23 +78,66 @@ namespace Prototype
 
         protected override void Update(GameTime gameTime)
         {
-            timeSinceLastUpdate = gameTime.ElapsedGameTime.Milliseconds;
-            counter += timeSinceLastUpdate;
-
-            // Allows the game to exit
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
-                this.Exit();
-
-            view = Matrix.CreateLookAt(camera.getCameraPosition(), camera.getCameraTarget(), camera.getUpVector());
-            player.Update(gameTime, timeSinceLastUpdate, camera);
-
-            if (counter > 1000)
+            switch(gameState)
             {
-                coins.Add(new Coin(new Vector3(rand.Next(-5, 6), 0, rand.Next(-5, 6))));
-                counter = 0;
+                case 0:
+                    timeSinceLastUpdate = gameTime.ElapsedGameTime.Milliseconds;
+                    counter += timeSinceLastUpdate;
+                    timeLeft -= timeSinceLastUpdate;
+
+                    view = Matrix.CreateLookAt(camera.getCameraPosition(), camera.getCameraTarget(), camera.getUpVector());
+                    if (counter > 2000)
+                    {
+                        int tmp1 = rand.Next(-5, 6);
+                        int tmp2 = rand.Next(-5, 6);
+                        for (int i = 0; i < coins.Count; ++i)
+                        {
+                            if (coins[i].getPosition() == new Vector3(tmp1, 0, tmp2) || player.getPosition() == new Vector3(tmp1, 0, tmp2) ||
+                                enemies[0].getPosition() == new Vector3(tmp1, 0, tmp2) || enemies[1].getPosition() == new Vector3(tmp1, 0, tmp2) ||
+                                enemies[2].getPosition() == new Vector3(tmp1, 0, tmp2) || enemies[3].getPosition() == new Vector3(tmp1, 0, tmp2))
+                            {
+                                coinAlreadyExists = true;
+                                break;
+                            }
+                        }
+                        if (coinAlreadyExists == false)
+                        {
+                            coins.Add(new Coin(new Vector3(tmp1, 0, tmp2)));
+                            counter = 0;
+                        }
+                        coinAlreadyExists = false;
+                    }
+                    /*for (int i = 0; i < enemies.Length; ++i)
+                    {
+                        if (enemies[i].getPosition() == player.getPosition())
+                        {
+                            gameState = 1;
+                        }
+                    }*/
+                    for (int i = 0; i < coins.Count; ++i)
+                    {
+                        if (coins[i].getPosition() == player.getPosition())
+                        {
+                            coins.RemoveAt(i);
+                            ++score;
+                        }
+                    }
+                    player.Update(gameTime, timeSinceLastUpdate, camera);
+                    enemyDirection = rand.Next(0, 4);
+                    enemies[0].Update(gameTime, timeSinceLastUpdate, enemyDirection);
+                    enemyDirection = rand.Next(0, 4);
+                    enemies[1].Update(gameTime, timeSinceLastUpdate, enemyDirection);
+                    enemyDirection = rand.Next(0, 4);
+                    enemies[2].Update(gameTime, timeSinceLastUpdate, enemyDirection);
+                    enemyDirection = rand.Next(0, 4);
+                    enemies[3].Update(gameTime, timeSinceLastUpdate, enemyDirection);
+                    if (timeLeft < 0)
+                    {
+                        gameState = 2;
+                    }
+                    break;
             }
             /*modelRotation += (float)gameTime.ElapsedGameTime.TotalMilliseconds * MathHelper.ToRadians(0.1f);*/
-
             base.Update(gameTime);
         }
 
@@ -100,21 +150,33 @@ namespace Prototype
         
         protected override void Draw(GameTime gameTime)
         {
-            graphics.GraphicsDevice.Clear(Color.CornflowerBlue);
-
-            effect.View = view;
-            effect.Projection = projection;
-            //effect.World = Matrix.CreateScale(2) * Matrix.CreateRotationY(MathHelper.PiOver4) * Matrix.CreateTranslation(2, 0, 0);
-            effect.VertexColorEnabled = true;
-
-            effect.CurrentTechnique.Passes[0].Apply();
-            GraphicsDevice.DrawUserPrimitives<VertexPositionColor>(PrimitiveType.TriangleStrip, plane, 0, 2);
-            player.Draw(gameTime, GraphicsDevice, effect);
-            enemies[0].Draw(gameTime, GraphicsDevice, effect);
-            enemies[1].Draw(gameTime, GraphicsDevice, effect);
-            for (int i = 0; i < coins.Count; ++i)
+            switch (gameState)
             {
-                coins[i].Draw(gameTime, GraphicsDevice, effect);
+                case 0:
+                    graphics.GraphicsDevice.Clear(Color.Black);
+                    effect.View = view;
+                    effect.Projection = projection;
+                    //effect.World = Matrix.CreateScale(2) * Matrix.CreateRotationY(MathHelper.PiOver4) * Matrix.CreateTranslation(2, 0, 0);
+                    effect.VertexColorEnabled = true;
+
+                    effect.CurrentTechnique.Passes[0].Apply();
+                    GraphicsDevice.DrawUserPrimitives<VertexPositionColor>(PrimitiveType.TriangleStrip, plane, 0, 2);
+                    player.Draw(gameTime, GraphicsDevice, effect);
+                    enemies[0].Draw(gameTime, GraphicsDevice, effect);
+                    enemies[1].Draw(gameTime, GraphicsDevice, effect);
+                    enemies[2].Draw(gameTime, GraphicsDevice, effect);
+                    enemies[3].Draw(gameTime, GraphicsDevice, effect);
+                    for (int i = 0; i < coins.Count; ++i)
+                    {
+                        coins[i].Draw(gameTime, GraphicsDevice, effect);
+                    }
+                    break;
+                case 1:
+                    graphics.GraphicsDevice.Clear(Color.Red);
+                    break;
+                case 2:
+                    graphics.GraphicsDevice.Clear(Color.Yellow);
+                    break;
             }
             
 

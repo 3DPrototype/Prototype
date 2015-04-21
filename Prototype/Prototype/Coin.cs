@@ -30,5 +30,10 @@ namespace Prototype
             effect.World = Matrix.Identity;
             effect.CurrentTechnique.Passes[0].Apply();
         }
+
+        public Vector3 getPosition()
+        {
+            return position;
+        }
     }
 }
