@@ -24,7 +24,7 @@ namespace Prototype
         {
             this.position = position;
             this.direction = direction;
-            playercube = new Cube(position, 1.0f, 1.0f, 1.0f, Color.Blue);
+            playercube = new Cube(position, 0.7f,0.7f, 0.7f, Color.Blue);
         }
 
         public void Update(GameTime gameTime, float timeSinceLastUpdate, Camera camera)
@@ -46,43 +46,43 @@ namespace Prototype
             }
             if (rotateCounter > 1000)
             {
-                if (keyboard.IsKeyDown(Keys.A) && direction.X == 1)
+                if (keyboard.IsKeyDown(Keys.Q) && direction.X == 1)
                 {
                     camera.setCameraPosition(Vector3.Transform(camera.getCameraPosition(), Matrix.CreateRotationY(MathHelper.PiOver2)));
                     direction.X = 0; direction.Y = 1; rotateCounter = 0;
                 }
-                else if (keyboard.IsKeyDown(Keys.A) && direction.X == -1)
+                else if (keyboard.IsKeyDown(Keys.Q) && direction.X == -1)
                 {
                     camera.setCameraPosition(Vector3.Transform(camera.getCameraPosition(), Matrix.CreateRotationY(MathHelper.PiOver2)));
                     direction.X = 0; direction.Y = -1; rotateCounter = 0;
                 }
-                else if (keyboard.IsKeyDown(Keys.A) && direction.Y == 1)
+                else if (keyboard.IsKeyDown(Keys.Q) && direction.Y == 1)
                 {
                     camera.setCameraPosition(Vector3.Transform(camera.getCameraPosition(), Matrix.CreateRotationY(MathHelper.PiOver2)));
                     direction.X = -1; direction.Y = 0; rotateCounter = 0;
                 }
-                else if (keyboard.IsKeyDown(Keys.A) && direction.Y == -1)
+                else if (keyboard.IsKeyDown(Keys.Q) && direction.Y == -1)
                 {
                     camera.setCameraPosition(Vector3.Transform(camera.getCameraPosition(), Matrix.CreateRotationY(MathHelper.PiOver2)));
                     direction.X = 1; direction.Y = 0; rotateCounter = 0;
                 }
 
-                else if (keyboard.IsKeyDown(Keys.D) && direction.X == 1)
+                else if (keyboard.IsKeyDown(Keys.E) && direction.X == 1)
                 {
                     camera.setCameraPosition(Vector3.Transform(camera.getCameraPosition(), Matrix.CreateRotationY(-MathHelper.PiOver2)));
                     direction.X = 0; direction.Y = -1; rotateCounter = 0;
                 }
-                else if (keyboard.IsKeyDown(Keys.D) && direction.X == -1)
+                else if (keyboard.IsKeyDown(Keys.E) && direction.X == -1)
                 {
                     camera.setCameraPosition(Vector3.Transform(camera.getCameraPosition(), Matrix.CreateRotationY(-MathHelper.PiOver2)));
                     direction.X = 0; direction.Y = 1; rotateCounter = 0;
                 }
-                else if (keyboard.IsKeyDown(Keys.D) && direction.Y == 1)
+                else if (keyboard.IsKeyDown(Keys.E) && direction.Y == 1)
                 {
                     camera.setCameraPosition(Vector3.Transform(camera.getCameraPosition(), Matrix.CreateRotationY(-MathHelper.PiOver2)));
                     direction.X = 1; direction.Y = 0; rotateCounter = 0;
                 }
-                else if (keyboard.IsKeyDown(Keys.D) && direction.Y == -1)
+                else if (keyboard.IsKeyDown(Keys.E) && direction.Y == -1)
                 {
                     camera.setCameraPosition(Vector3.Transform(camera.getCameraPosition(), Matrix.CreateRotationY(-MathHelper.PiOver2)));
                     direction.X = -1; direction.Y = 0; rotateCounter = 0;

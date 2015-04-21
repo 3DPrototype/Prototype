@@ -30,6 +30,9 @@ namespace Prototype
         int score;
         float timeLeft;
         float counter = 0;
+        float enemycounter = 0;
+        SpriteFont spriteFont;
+        SpriteFont spriteFont2;
 
         float timeSinceLastUpdate;
 
@@ -47,9 +50,9 @@ namespace Prototype
             plane[3] = new VertexPositionColor(new Vector3(11.0f, -0.5f, 11.0f), Color.LawnGreen);
             player = new Player(new Vector3(0, 0, 0), new Vector2(0, 1));
             camera = new Camera(new Vector3(0, 25, 15), Vector3.Zero, Vector3.Up);
-            enemies[0] = new Enemy(new Vector3(-3,0,3));
-            enemies[1] = new Enemy(new Vector3(3,0,-3));
-            enemies[2] = new Enemy(new Vector3(3, 0, 3));
+            enemies[0] = new Enemy(new Vector3(3,0,3));
+            enemies[1] = new Enemy(new Vector3(-3,0,3));
+            enemies[2] = new Enemy(new Vector3(3, 0, -3));
             enemies[3] = new Enemy(new Vector3(-3, 0, -3));
             timeLeft = 30000;
             base.Initialize();
@@ -66,6 +69,8 @@ namespace Prototype
             spriteBatch = new SpriteBatch(GraphicsDevice);
             effect = new BasicEffect(GraphicsDevice);
             projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 0.5f, 1000.0f);
+            spriteFont = Content.Load<SpriteFont>("basic");
+            spriteFont2 = Content.Load<SpriteFont>("big");
 
             /*myModel = Content.Load<Model>("Models\\EAGuy");
             aspectRatio = graphics.GraphicsDevice.Viewport.AspectRatio;*/
@@ -83,18 +88,19 @@ namespace Prototype
                 case 0:
                     timeSinceLastUpdate = gameTime.ElapsedGameTime.Milliseconds;
                     counter += timeSinceLastUpdate;
+                    enemycounter += timeSinceLastUpdate;
                     timeLeft -= timeSinceLastUpdate;
 
                     view = Matrix.CreateLookAt(camera.getCameraPosition(), camera.getCameraTarget(), camera.getUpVector());
+
+                    //generating coins
                     if (counter > 2000)
                     {
-                        int tmp1 = rand.Next(-5, 6);
-                        int tmp2 = rand.Next(-5, 6);
+                        int coinposition1 = rand.Next(-5, 6);
+                        int coinposition2 = rand.Next(-5, 6);
                         for (int i = 0; i < coins.Count; ++i)
                         {
-                            if (coins[i].getPosition() == new Vector3(tmp1, 0, tmp2) || player.getPosition() == new Vector3(tmp1, 0, tmp2) ||
-                                enemies[0].getPosition() == new Vector3(tmp1, 0, tmp2) || enemies[1].getPosition() == new Vector3(tmp1, 0, tmp2) ||
-                                enemies[2].getPosition() == new Vector3(tmp1, 0, tmp2) || enemies[3].getPosition() == new Vector3(tmp1, 0, tmp2))
+                            if (coins[i].getPosition() == new Vector3(coinposition1, 0, coinposition2) || player.getPosition() == new Vector3(coinposition1, 0, coinposition2))
                             {
                                 coinAlreadyExists = true;
                                 break;
@@ -102,18 +108,22 @@ namespace Prototype
                         }
                         if (coinAlreadyExists == false)
                         {
-                            coins.Add(new Coin(new Vector3(tmp1, 0, tmp2)));
+                            coins.Add(new Coin(new Vector3(coinposition1, 0, coinposition2)));
                             counter = 0;
                         }
                         coinAlreadyExists = false;
                     }
-                    /*for (int i = 0; i < enemies.Length; ++i)
+
+                    //Losescreen
+                    for (int i = 0; i < enemies.Length; ++i)
                     {
                         if (enemies[i].getPosition() == player.getPosition())
                         {
                             gameState = 1;
                         }
-                    }*/
+                    }
+
+                    //collecting coins
                     for (int i = 0; i < coins.Count; ++i)
                     {
                         if (coins[i].getPosition() == player.getPosition())
@@ -123,14 +133,36 @@ namespace Prototype
                         }
                     }
                     player.Update(gameTime, timeSinceLastUpdate, camera);
-                    enemyDirection = rand.Next(0, 4);
-                    enemies[0].Update(gameTime, timeSinceLastUpdate, enemyDirection);
-                    enemyDirection = rand.Next(0, 4);
-                    enemies[1].Update(gameTime, timeSinceLastUpdate, enemyDirection);
-                    enemyDirection = rand.Next(0, 4);
-                    enemies[2].Update(gameTime, timeSinceLastUpdate, enemyDirection);
-                    enemyDirection = rand.Next(0, 4);
-                    enemies[3].Update(gameTime, timeSinceLastUpdate, enemyDirection);
+
+                    //moving of the enemies
+                    if (enemycounter > 1000)
+                    {
+                        for (int i = 0; i < enemies.Length; ++i)
+                        {
+                            enemyDirection = rand.Next(0, 4);
+                            switch (enemyDirection)
+                            {
+                                case 0:
+                                    if (enemies[i].getPosition().X < 5)
+                                    { enemies[i] = new Enemy(enemies[i].getPosition() + new Vector3(1, 0, 0)); enemycounter = 0; }
+                                    break;
+                                case 1:
+                                    if (enemies[i].getPosition().X > -5)
+                                    { enemies[i] = new Enemy(enemies[i].getPosition() + new Vector3(-1, 0, 0)); enemycounter = 0; }
+                                    break;
+                                case 2:
+                                    if (enemies[i].getPosition().Z > -5)
+                                    { enemies[i] = new Enemy(enemies[i].getPosition() + new Vector3(0, 0, 1)); enemycounter = 0; }
+                                    break;
+                                case 3:
+                                    if (enemies[i].getPosition().Z < 5)
+                                    { enemies[i] = new Enemy(enemies[i].getPosition() + new Vector3(0, 0, -1)); enemycounter = 0; }
+                                    break;
+                            }
+                        }
+                    }
+
+                    //Winscreen
                     if (timeLeft < 0)
                     {
                         gameState = 2;
@@ -170,12 +202,22 @@ namespace Prototype
                     {
                         coins[i].Draw(gameTime, GraphicsDevice, effect);
                     }
+                    spriteBatch.Begin();
+                    spriteBatch.DrawString(spriteFont, "Remaining Time: " + timeLeft.ToString(), new Vector2(10, 10), Color.White);
+                    spriteBatch.DrawString(spriteFont, "Score: " + score.ToString(), new Vector2(300, 10), Color.White);
+                    spriteBatch.End();
                     break;
                 case 1:
                     graphics.GraphicsDevice.Clear(Color.Red);
+                    spriteBatch.Begin();
+                    spriteBatch.DrawString(spriteFont2, "GAME OVER", new Vector2(300, 200), Color.Black);
+                    spriteBatch.End();
                     break;
                 case 2:
                     graphics.GraphicsDevice.Clear(Color.Yellow);
+                    spriteBatch.Begin();
+                    spriteBatch.DrawString(spriteFont2, "Score: " + score.ToString(), new Vector2(300, 200), Color.Black);
+                    spriteBatch.End();
                     break;
             }
             
